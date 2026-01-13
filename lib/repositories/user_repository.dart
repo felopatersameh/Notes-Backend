@@ -1,5 +1,3 @@
-// ignore_for_file: public_member_api_docs
-
 import 'package:mongo_dart/mongo_dart.dart';
 import 'package:notes/Enum/collections_enum.dart';
 import 'package:notes/Enum/keys_enum.dart';
@@ -62,13 +60,13 @@ class UserRepository {
         };
       }
 
-      final hashedPassword = EncryptionHelper.encryptPassword(model.password!);
+      final hashedPassword = EncryptionHelper.hashPassword(model.password!);
       final newModel = model.copyWith(password: hashedPassword);
       final result = await _collection.insertOne(newModel.toMap());
-      
+
       return {
         'success': result.isSuccess,
-         KeysEnum.message.valueKey: result.isSuccess
+        KeysEnum.message.valueKey: result.isSuccess
             ? 'Registration successful'
             : 'Registration failed',
       };
@@ -107,20 +105,20 @@ class UserRepository {
 
       if (result.isFailure) {
         return {
-        'success': false,
-        KeysEnum.message.valueKey: 'An error occurred during updated',
+          'success': false,
+          KeysEnum.message.valueKey: 'An error occurred during updated',
         };
       }
 
       return {
         'success': true,
         KeysEnum.message.valueKey: 'success updated',
-      } ;
+      };
     } catch (e) {
       return {
         'success': false,
         KeysEnum.message.valueKey: e.toString(),
-      } ;
+      };
     }
   }
 
@@ -165,12 +163,12 @@ class UserRepository {
   }
 
   bool _isPasswordValid(Map<String, dynamic> user, String password) {
-    final encryptedPassword = user[KeysEnum.password.valueKey]?.toString();
-    if (encryptedPassword == null) return false;
+    final hashedPassword = user[KeysEnum.password.valueKey]?.toString();
+    if (hashedPassword == null) return false;
 
-    final decryptedPassword =
-        EncryptionHelper.decryptPassword(encryptedPassword);
-    return decryptedPassword == password;
+    final verifyPassword =
+        EncryptionHelper.verifyPassword(password, hashedPassword);
+    return verifyPassword;
   }
 
   String _extractUserId(Map<String, dynamic> user) {
@@ -206,16 +204,16 @@ class UserRepository {
   }
 
   bool _verifyOldPassword(String encryptedPassword, String oldPassword) {
-    final decryptedPassword =
-        EncryptionHelper.decryptPassword(encryptedPassword);
-    return oldPassword == decryptedPassword;
+    final verifyPassword =
+        EncryptionHelper.verifyPassword(oldPassword,encryptedPassword);
+    return verifyPassword;
   }
 
   Future<bool> _updatePasswordInDb(
     ObjectId objectId,
     String newPassword,
   ) async {
-    final encryptedPassword = EncryptionHelper.encryptPassword(newPassword);
+    final encryptedPassword = EncryptionHelper.hashPassword(newPassword);
 
     final result = await _collection.updateOne(
       where.eq(KeysEnum.id.valueKey, objectId),

@@ -10,7 +10,7 @@ import 'package:notes/utils/tokens.dart';
 
 Future<Response> onRequest(RequestContext context) async {
   final authData = context.read<AuthData>();
-  
+
   return switch (context.request.method) {
     HttpMethod.get => await _getUser(authData.userId, context),
     HttpMethod.put => await _updateUser(authData.userId, context),
@@ -26,7 +26,7 @@ Future<Response> onRequest(RequestContext context) async {
 Future<Response> _getUser(String userId, RequestContext context) async {
   final repo = context.read<UserRepository>();
   final result = await repo.getUserData(userId);
-  
+
   if (result == null) {
     return Response.json(
       statusCode: HttpStatus.notFound,
@@ -36,9 +36,9 @@ Future<Response> _getUser(String userId, RequestContext context) async {
       },
     );
   }
-  
+
   final model = UserModel.fromMap(result);
-  
+
   return Response.json(
     body: {
       KeysEnum.message.valueKey: 'User retrieved successfully',
@@ -50,7 +50,7 @@ Future<Response> _getUser(String userId, RequestContext context) async {
 Future<Response> _updateUser(String userId, RequestContext context) async {
   try {
     final json = await context.request.json() as Map<String, dynamic>;
-    
+
     if (json.isEmpty) {
       return Response.json(
         statusCode: HttpStatus.badRequest,
@@ -59,7 +59,7 @@ Future<Response> _updateUser(String userId, RequestContext context) async {
         },
       );
     }
-    
+
     final repo = context.read<UserRepository>();
     final model = UpdateUserModel.fromMap(json);
     final result = await repo.updateAccount(userId, model);
@@ -76,5 +76,3 @@ Future<Response> _updateUser(String userId, RequestContext context) async {
     );
   }
 }
-
-

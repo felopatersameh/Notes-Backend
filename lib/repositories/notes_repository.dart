@@ -1,5 +1,3 @@
-// ignore_for_file: public_member_api_docs
-
 import 'package:mongo_dart/mongo_dart.dart';
 import 'package:nanoid/async.dart';
 import 'package:notes/Enum/collections_enum.dart';
@@ -56,6 +54,9 @@ class NotesRepository {
     Map<String, dynamic> updatedFields,
   ) async {
     try {
+      final noteId = updatedFields[KeysEnum.idNotes.valueKey] as String?;
+      if (noteId == null) return null;
+
       final updatedNewFields = {
         KeysEnum.updateAt.valueKey: DateTime.now().toIso8601String(),
         ...updatedFields,
@@ -67,7 +68,7 @@ class NotesRepository {
       final result = await _collection.updateOne(
         where.eq(KeysEnum.id.valueKey, objectId).eq(
               '${KeysEnum.notes.valueKey}.${KeysEnum.idNotes.valueKey}',
-              updatedNewFields[KeysEnum.idNotes.valueKey],
+              noteId,
             ),
         modifier,
       );

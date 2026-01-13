@@ -24,14 +24,12 @@ Future<Response> changePassword(String id, RequestContext context) async {
     final repo = context.read<UserRepository>();
     final result = await repo.updatePassword(id, old, current);
     if (!result) {
-      if (!result) {
-        return Response.json(
-          statusCode: HttpStatus.notAcceptable,
-          body: {
-            KeysEnum.message.valueKey: 'Old password is incorrect',
-          },
-        );
-      }
+      return Response.json(
+        statusCode: HttpStatus.notAcceptable,
+        body: {
+          KeysEnum.message.valueKey: 'Old password is incorrect',
+        },
+      );
     }
     return Response.json(
       body: {

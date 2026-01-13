@@ -18,7 +18,7 @@ class UpdateUserModel {
 
   factory UpdateUserModel.fromMap(Map<String, dynamic> map) {
     return UpdateUserModel(
-      name: map[KeysEnum.name.valueKey] as String,
+      name: map[KeysEnum.name.valueKey] as String?,
     );
   }
 }

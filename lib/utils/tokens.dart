@@ -1,87 +1,103 @@
-// ignore: lines_longer_than_80_chars
-// ignore_for_file: eol_at_end_of_file, public_member_api_docs, prefer_final_fields, non_constant_identifier_names
-
 import 'dart:io';
 import 'package:dart_frog/dart_frog.dart';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 import 'package:dotenv/dotenv.dart';
+import 'package:uuid/uuid.dart';
 
 class AuthData {
   const AuthData({
     required this.userId,
+    required this.role,
     required this.token,
+    required this.tokenId,
   });
 
   final String userId;
+  final String role;
   final String token;
+  final String tokenId;
 }
 
 class TokensClass {
   static final env = DotEnv()..load();
-  static String _SecretKey = env['SECRET_KEY_Token']!;
-  static final Set<String> _revokedTokens = {};
+  static final String _secretKey = env['SECRET_KEY_Token']!;
 
-  static String generateToken(String userId, {bool withExpiry = true}) {
+  /// ⚠️ DEV ONLY
+  static final Set<String> _revokedTokenIds = {};
+
+  // ================== TOKEN ==================
+
+  static String generateToken(
+    String userId, {
+    bool withExpiry = true,
+    String? role,
+  }) {
+    final tokenId = const Uuid().v4();
+
     final jwt = JWT(
       {
-        'id': userId,
-        'role': 'user',
+        'sub': userId,
+        'role': role ?? 'user',
+        'jti': tokenId,
       },
     );
-    if (withExpiry) {
-      return jwt.sign(
-        SecretKey(_SecretKey),
-        expiresIn: const Duration(days: 30),
-      );
-    } else {
-      return jwt.sign(SecretKey(_SecretKey));
-    }
+
+    return jwt.sign(
+      SecretKey(_secretKey),
+      expiresIn: withExpiry ? const Duration(days: 30) : null,
+    );
   }
 
   static bool revokeToken(String token) {
     try {
-      _revokedTokens.add(token);
+      final jwt = JWT.verify(token, SecretKey(_secretKey));
+      final payload = jwt.payload as Map<String, dynamic>;
+      _revokedTokenIds.add(payload['jti'].toString());
       return true;
-    } catch (e) {
+    } catch (_) {
       return false;
     }
   }
 
-  static bool isTokenRevoked(String token) {
-    return _revokedTokens.contains(token);
+  static bool isTokenRevoked(String tokenId) {
+    return _revokedTokenIds.contains(tokenId);
   }
+
+  // ================== MIDDLEWARE ==================
 
   static Handler authMiddleware(Handler handler) {
     return (context) async {
-      final authHeader = context.request.headers['authorization'];
-      if (authHeader == null || !authHeader.startsWith('Bearer ')) {
+      final header = context.request.headers['authorization'];
+
+      if (header == null || !header.startsWith('Bearer ')) {
         return Response.json(
           statusCode: HttpStatus.unauthorized,
           body: {'message': 'Unauthorized'},
         );
       }
 
-      final token = authHeader.substring(7);
-
-      if (isTokenRevoked(token)) {
-        return Response.json(
-          statusCode: HttpStatus.unauthorized,
-          body: {'message': 'Token has been revoked'},
-        );
-      }
+      final token = header.substring(7);
 
       try {
-        final jwt = JWT.verify(
-          token,
-          SecretKey(_SecretKey),
+        final jwt = JWT.verify(token, SecretKey(_secretKey));
+        final payload = jwt.payload as Map<String, dynamic>;
+
+        final tokenId = payload['jti'].toString();
+        if (isTokenRevoked(tokenId)) {
+          return Response.json(
+            statusCode: HttpStatus.unauthorized,
+            body: {'message': 'Token revoked'},
+          );
+        }
+
+        final authData = AuthData(
+          userId: payload['sub'].toString(),
+          role: payload['role'].toString(),
+          token: token,
+          tokenId: tokenId,
         );
-        final map = jwt.payload as Map<String, dynamic>;
-        final userId = map['id'] as String;
 
-        final authData = AuthData(userId: userId, token: token);
-        final authHandler = handler.use(provider<AuthData>((_) => authData));
-
-        return authHandler.call(context);
+        return handler.use(provider<AuthData>((_) => authData)).call(context);
       } on JWTExpiredException {
         return Response.json(
           statusCode: HttpStatus.unauthorized,
