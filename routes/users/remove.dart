@@ -7,46 +7,34 @@ import 'package:notes/repositories/user_repository.dart';
 import 'package:notes/utils/tokens.dart';
 
 Future<Response> onRequest(RequestContext context) async {
-  final userId = context.read<AuthData>().userId;
+  final data = context.read<AuthData>();
 
 
   return switch (context.request.method) {
-    HttpMethod.delete => await _deleteAccount(userId, context),
+    HttpMethod.delete => await _removeUser(data, context),
     _ => Response.json(
         statusCode: HttpStatus.methodNotAllowed,
         body: {
-          KeysEnum.message.valueKey: 'Allowed methods: POST, DELETE',
+          KeysEnum.message.valueKey: 'Allowed methods:  DELETE',
         },
       )
   };
 }
 
-Future<Response> _deleteAccount(String userId, RequestContext context) async {
-  final authHeader = context.request.headers['authorization'];
-
-  if (authHeader == null || !authHeader.startsWith('Bearer ')) {
-    return Response.json(
-      statusCode: HttpStatus.unauthorized,
-      body: {
-        KeysEnum.message.valueKey: 'Unauthorized',
-      },
-    );
-  }
-
-  final token = authHeader.substring(7);
+Future<Response> _removeUser(AuthData authData, RequestContext context) async {
   final repo = context.read<UserRepository>();
-
-  final success = await repo.deleteAccount(userId);
-
+  final success = await repo.deleteAccount(authData.userId);
+  
   if (success) {
-    await repo.logout(token);
+    await repo.logout(authData.token);
   }
-
+  
   return Response.json(
     statusCode: success ? HttpStatus.ok : HttpStatus.internalServerError,
     body: {
-      KeysEnum.message.valueKey:
-          success ? 'Account deleted successfully' : 'Failed to delete account',
+      KeysEnum.message.valueKey: success 
+          ? 'Account deleted successfully' 
+          : 'Failed to delete account',
     },
   );
 }

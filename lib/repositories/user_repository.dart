@@ -105,13 +105,22 @@ class UserRepository {
         {r'$set': model.toMap()},
       );
 
-      if (!_isUpdateSuccessful(result.document!)) return null;
+      if (result.isFailure) {
+        return {
+        'success': false,
+        KeysEnum.message.valueKey: 'An error occurred during updated',
+        };
+      }
 
-      return await _collection.findOne(
-        where.eq(KeysEnum.id.valueKey, objectId),
-      );
+      return {
+        'success': true,
+        KeysEnum.message.valueKey: 'success updated',
+      } ;
     } catch (e) {
-      return null;
+      return {
+        'success': false,
+        KeysEnum.message.valueKey: e.toString(),
+      } ;
     }
   }
 
@@ -140,7 +149,7 @@ class UserRepository {
       final result = await _collection.deleteOne(
         where.eq(KeysEnum.id.valueKey, objectId),
       );
-      return result.success;
+      return result.isSuccess;
     } catch (e) {
       return false;
     }
@@ -179,12 +188,12 @@ class UserRepository {
     return data;
   }
 
- bool _isUpdateSuccessful(Map<String, dynamic> result) {
-    return (result.containsKey('nModified') &&
-            ((result['nModified'] as int?) ?? 0) > 0) ||
-        (result.containsKey('nMatched') &&
-            ((result['nMatched'] as int?) ?? 0) > 0);
-  }
+//  bool _isUpdateSuccessful(Map<String, dynamic> result) {
+//     return (result.containsKey('nModified') &&
+//             ((result['nModified'] as int?) ?? 0) > 0) ||
+//         (result.containsKey('nMatched') &&
+//             ((result['nMatched'] as int?) ?? 0) > 0);
+//   }
 
   Future<String?> _getCurrentPassword(ObjectId objectId) async {
     final response = await _collection.findOne(
