@@ -1,42 +1,53 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'package:notes/Enum/keys_enum.dart';
+
 class NotesModel {
-  final String id;
-  final String subject;
-  final String body;
-  final String createdAt;
-  final String updatedAt;
-  final List<String> colors;
   NotesModel({
-    required this.id,
-    required this.subject,
-    required this.body,
+    required this.idNote,
     required this.createdAt,
     required this.updatedAt,
-    required this.colors,
+    this.subject,
+    this.body,
   });
+
+  factory NotesModel.fromMap(Map<String, dynamic> map,{String? id}){
+    return NotesModel(
+      idNote: (id ?? map[KeysEnum.idNotes.valueKey]) as String,
+      subject: (map[KeysEnum.subject.valueKey]??'') as String,
+      body: (map[KeysEnum.body.valueKey]??'') as String,
+      createdAt: (map[KeysEnum.createAt.valueKey] ??
+          DateTime.now().toIso8601String()) as String,
+      updatedAt: (map[KeysEnum.updateAt.valueKey] ??
+          DateTime.now().toIso8601String()) as String,
+    );
+  }  
+  
+  final String idNote;
+  final String? subject;
+  final String? body;
+  final String createdAt;
+  final String updatedAt;
 
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
-      'id': id,
-      'subject': subject,
-      'body': body,
-      'createdAt': createdAt,
-      'updatedAt': updatedAt,
-      'colors': colors,
+      KeysEnum.idNotes.valueKey: idNote,
+      KeysEnum.subject.valueKey: subject,
+      KeysEnum.body.valueKey: body,
+      KeysEnum.createAt.valueKey: createdAt,
+      KeysEnum.updateAt.valueKey: updatedAt,
     };
   }
 
-  factory NotesModel.fromMap(Map<String, dynamic> map) {
+  NotesModel copyWith({
+    String? subject,
+    String? body,
+    String? updatedAt,
+  }) {
     return NotesModel(
-      id: map['id'] as String,
-      subject: map['subject'] as String,
-      body: map['body'] as String,
-      createdAt: map['createdAt'] as String,
-      updatedAt: map['updatedAt'] as String,
-      colors: List<String>.from(
-        map['colors'] as List<String>,
-      ),
+      idNote: idNote,
+      subject: subject ?? this.subject,
+      body: body ?? this.body,
+      createdAt: createdAt,
+      updatedAt: DateTime.now().toIso8601String(),
     );
   }
-
 }
