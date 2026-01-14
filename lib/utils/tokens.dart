@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:dart_frog/dart_frog.dart';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
-import 'package:dotenv/dotenv.dart';
+import 'package:notes/env_helper.dart';
 import 'package:uuid/uuid.dart';
 
 class AuthData {
@@ -19,8 +19,7 @@ class AuthData {
 }
 
 class TokensClass {
-  static final env = DotEnv()..load();
-  static final String _secretKey = env['SECRET_KEY_Token']!;
+  static final String _secretKey = env.getRequired('SECRET_KEY_Token');
 
   /// ⚠️ DEV ONLY
   static final Set<String> _revokedTokenIds = {};

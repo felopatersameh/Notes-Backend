@@ -1,13 +1,18 @@
 import 'package:dart_frog/dart_frog.dart';
-import 'package:dotenv/dotenv.dart';
 import 'package:mongo_dart/mongo_dart.dart';
+import 'package:notes/env_helper.dart';
 import 'package:notes/repositories/notes_repository.dart';
 import 'package:notes/repositories/user_repository.dart';
 
 Handler middleware(Handler handler) {
   return (context) async {
-          final env = DotEnv()..load();
-      final mongoUri = env['MONGO_URI'] ?? '';
+    final mongoUri = env.getRequired('MONGO_URI');
+
+    // Validate
+    if (!mongoUri.startsWith('mongodb://') &&
+        !mongoUri.startsWith('mongodb+srv://')) {
+      throw Exception('Invalid MONGO_URI format');
+    }
     final db = await Db.create(
       mongoUri,
     );
