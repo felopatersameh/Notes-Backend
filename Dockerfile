@@ -1,17 +1,29 @@
+# مرحلة البناء
+FROM dart:stable AS build
+
+WORKDIR /app
+
+# نسخ ملفات المشروع
+COPY pubspec.* ./
+RUN dart pub get
+
+COPY . .
+
+# بناء المشروع
+RUN dart pub global activate dart_frog_cli
+RUN dart pub global run dart_frog_cli:dart_frog build
+
+# مرحلة التشغيل
 FROM dart:stable
 
 WORKDIR /app
 
-# copy pubs pec
-COPY pubspec.* ./
-RUN dart pub get
+# نسخ الملفات المبنية
+COPY --from=build /app/build /app
 
-# نسخ باقي المشروع
-COPY . .
-
-# Railway بيدي PORT
+# Railway بيحدد PORT تلقائي
 ENV PORT=8080
-
 EXPOSE 8080
 
-CMD ["dart", "run", "dart_frog", "dev", "--port", "8080"]
+# تشغيل السيرفر المبني
+CMD ["dart", "run", "bin/server.dart"]
