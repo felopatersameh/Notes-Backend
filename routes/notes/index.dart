@@ -2,43 +2,42 @@ import 'dart:io';
 import 'package:dart_frog/dart_frog.dart';
 import 'package:notes/Enum/keys_enum.dart';
 import 'package:notes/repositories/notes_repository.dart';
+import 'package:notes/utils/custom_messages.dart';
+import 'package:notes/utils/my_response_model.dart';
 import 'package:notes/utils/tokens.dart';
 
 Future<Response> onRequest(RequestContext context) async {
   final userId = context.read<AuthData>().userId;
 
   return switch (context.request.method) {
-    HttpMethod.get => await _getNotes(userId, context),
-    HttpMethod.post => await _addNote(userId, context),
-    _ => Response.json(
+    HttpMethod.get => await getNotes(userId, context),
+    HttpMethod.post => await addNote(userId, context),
+    _ => await MyResponseModel.error(
         statusCode: HttpStatus.methodNotAllowed,
-        body: {
-          KeysEnum.message.valueKey: 'Allowed methods: GET, POST, PUT, DELETE',
-        },
+        message: CustomMessages.methodsAllowed(
+          methods: [MethodsEnum.get, MethodsEnum.post],
+        ),
       )
   };
 }
 
-Future<Response> _getNotes(String userId, RequestContext context) async {
+Future<Response> getNotes(String userId, RequestContext context) async {
   final repo = context.read<NotesRepository>();
   final notes = await repo.getNotes(userId);
 
-  return Response.json(
-    body: {
-      KeysEnum.data.valueKey: notes,
-    },
+  return MyResponseModel.success(
+    message: CustomMessages.notesRetrievedSuccessfully,
+    body: notes,
   );
 }
 
-Future<Response> _addNote(String userId, RequestContext context) async {
+Future<Response> addNote(String userId, RequestContext context) async {
   final json = await context.request.json() as Map<String, dynamic>;
 
   if (json[KeysEnum.body.valueKey] == null) {
-    return Response.json(
+    return MyResponseModel.error(
       statusCode: HttpStatus.badRequest,
-      body: {
-        KeysEnum.message.valueKey: 'Field "body" is required',
-      },
+      message: CustomMessages.fieldBodyRequired,
     );
   }
 
@@ -51,16 +50,15 @@ Future<Response> _addNote(String userId, RequestContext context) async {
   final result = await repo.addNote(userId, noteData);
 
   if (result == null) {
-    return Response.json(
+    return MyResponseModel.error(
       statusCode: HttpStatus.internalServerError,
-      body: {
-        KeysEnum.message.valueKey: 'Failed to add note',
-      },
+      message: CustomMessages.failedToAddNote,
     );
   }
 
-  return Response.json(
+  return MyResponseModel.success(
     statusCode: HttpStatus.created,
+    message: CustomMessages.noteAddedSuccessfully,
     body: result.toMap(),
   );
 }

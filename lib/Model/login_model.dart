@@ -1,6 +1,6 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
-
 import 'package:notes/Enum/keys_enum.dart';
+import 'package:notes/utils/custom_messages.dart';
+import 'package:sahih_validator/sahih_validator.dart';
 
 class LoginModel {
   LoginModel({
@@ -17,23 +17,48 @@ class LoginModel {
     };
   }
 
-  factory LoginModel._fromMap(Map<String, dynamic> map) {
-    return LoginModel(
-      email: (map[KeysEnum.email.valueKey] ?? '') as String,
-      password: (map[KeysEnum.password.valueKey] ?? '') as String,
-    );
-  }
-
   static Map<bool, Object> fromMapValidate(Map<String, dynamic> map) {
-    final model = LoginModel._fromMap(map);
-    if (model.email == '' || model.password == '') {
+    final email = (map[KeysEnum.email.valueKey] ?? '').toString().trim();
+    final password = (map[KeysEnum.password.valueKey] ?? '').toString().trim();
+
+    // Validate email
+    if (email.isEmpty) {
       return {
-        false: 'parms is requerid',
-      };
-    } else {
-      return {
-        true: model,
+        false: CustomMessages.emailRequired,
       };
     }
+
+    final emailError = SahihValidator.email(
+      email: email,
+      emptyMessage: CustomMessages.emailRequired,
+      invalidFormatMessage: CustomMessages.emailInvalid,
+    );
+
+    if (emailError != null) {
+      return {
+        false: emailError,
+      };
+    }
+
+    // Validate password (only check if not empty for login)
+    final passwordError = SahihValidator.loginPassword(
+      password: password,
+      emptyMessage: CustomMessages.passwordRequired,
+    );
+
+    if (passwordError != null) {
+      return {
+        false: passwordError,
+      };
+    }
+
+    final model = LoginModel(
+      email: email,
+      password: password,
+    );
+
+    return {
+      true: model,
+    };
   }
 }

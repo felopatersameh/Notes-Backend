@@ -1,8 +1,8 @@
 import 'package:dart_frog/dart_frog.dart';
 import 'package:mongo_dart/mongo_dart.dart';
-import 'package:notes/env_helper.dart';
 import 'package:notes/repositories/notes_repository.dart';
 import 'package:notes/repositories/user_repository.dart';
+import 'package:notes/utils/env_helper.dart';
 
 Handler middleware(Handler handler) {
   return (context) async {

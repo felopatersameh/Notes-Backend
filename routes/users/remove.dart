@@ -2,39 +2,39 @@
 
 import 'dart:io';
 import 'package:dart_frog/dart_frog.dart';
-import 'package:notes/Enum/keys_enum.dart';
 import 'package:notes/repositories/user_repository.dart';
+import 'package:notes/utils/custom_messages.dart';
+import 'package:notes/utils/my_response_model.dart';
 import 'package:notes/utils/tokens.dart';
 
 Future<Response> onRequest(RequestContext context) async {
   final data = context.read<AuthData>();
 
-
   return switch (context.request.method) {
-    HttpMethod.delete => await _removeUser(data, context),
-    _ => Response.json(
+    HttpMethod.delete => await removeUser(data, context),
+    _ => await MyResponseModel.error(
         statusCode: HttpStatus.methodNotAllowed,
-        body: {
-          KeysEnum.message.valueKey: 'Allowed methods:  DELETE',
-        },
+        message: CustomMessages.methodsAllowed(methods: [MethodsEnum.delete]),
       )
   };
 }
 
-Future<Response> _removeUser(AuthData authData, RequestContext context) async {
+Future<Response> removeUser(AuthData authData, RequestContext context) async {
   final repo = context.read<UserRepository>();
   final success = await repo.deleteAccount(authData.userId);
-  
+
   if (success) {
     await repo.logout(authData.token);
   }
-  
-  return Response.json(
-    statusCode: success ? HttpStatus.ok : HttpStatus.internalServerError,
-    body: {
-      KeysEnum.message.valueKey: success 
-          ? 'Account deleted successfully' 
-          : 'Failed to delete account',
-    },
+
+  if (!success) {
+    return MyResponseModel.error(
+      statusCode: HttpStatus.internalServerError,
+      message: CustomMessages.failedToDeleteAccount,
+    );
+  }
+
+  return MyResponseModel.success(
+    message: CustomMessages.accountDeletedSuccessfully,
   );
 }

@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:dart_frog/dart_frog.dart';
 import 'package:notes/Enum/keys_enum.dart';
 import 'package:notes/repositories/notes_repository.dart';
+import 'package:notes/utils/custom_messages.dart';
+import 'package:notes/utils/my_response_model.dart';
 import 'package:notes/utils/tokens.dart';
 
 Future<Response> onRequest(
@@ -11,28 +13,32 @@ Future<Response> onRequest(
 ) async {
   final idUser = context.read<AuthData>().userId;
   return switch (context.request.method) {
-    HttpMethod.put => await _updateNote(idUser, idNote, context),
-    HttpMethod.delete => await removeNotes(idUser, idNote, context),
-    _ => Response.json(
+    HttpMethod.put => await updateNote(idUser, idNote, context),
+    HttpMethod.delete => await removeNote(idUser, idNote, context),
+    _ => await MyResponseModel.error(
         statusCode: HttpStatus.methodNotAllowed,
-        body: {
-          KeysEnum.message.valueKey: 'Allowed methods: PUT, DELETE',
-        },
+        message: CustomMessages.methodsAllowed(
+          methods: [MethodsEnum.put, MethodsEnum.delete],
+        ),
       )
   };
 }
 
-Future<Response> removeNotes(
+Future<Response> removeNote(
   String id,
   String idNotes,
   RequestContext context,
 ) async {
   final repo = context.read<NotesRepository>();
   final result = await repo.removeNote(id, idNotes);
-  return Future.value(Response.json(body: {'data': result}));
+
+  return MyResponseModel.success(
+    message: CustomMessages.noteRemovedSuccessfully,
+    body: result,
+  );
 }
 
-Future<Response> _updateNote(
+Future<Response> updateNote(
   String userId,
   String idNotes,
   RequestContext context,
@@ -51,15 +57,14 @@ Future<Response> _updateNote(
   final result = await repo.updateNotePart(userId, updateData);
 
   if (result == null) {
-    return Response.json(
+    return MyResponseModel.error(
       statusCode: HttpStatus.notFound,
-      body: {
-        KeysEnum.message.valueKey: 'Note not found or failed to update',
-      },
+      message: CustomMessages.noteNotFoundOrFailedToUpdate,
     );
   }
 
-  return Response.json(
+  return MyResponseModel.success(
+    message: CustomMessages.noteUpdatedSuccessfully,
     body: result,
   );
 }
