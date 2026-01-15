@@ -14,7 +14,7 @@ dependencies:
   dotenv: ^4.2.0
   mongo_dart: ^0.10.5
   nanoid: ^1.0.0
-  sahih_validator: ^1.0.0
+  sahih_validator: ^2.0.0
 
 dev_dependencies:
   dart_frog_lint: ^0.1.0
