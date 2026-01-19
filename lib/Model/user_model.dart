@@ -34,7 +34,7 @@ class UserModel {
 
   factory UserModel.fromMap(Map<String, dynamic> map) {
     return UserModel(
-      // id: map[KeysEnum.id.valueKey] as String,
+      id: map[KeysEnum.id.valueKey] as String,
       name: map[KeysEnum.name.valueKey] as String,
       email: map[KeysEnum.email.valueKey] as String,
       // password: map[KeysEnum.password.valueKey] as String,
