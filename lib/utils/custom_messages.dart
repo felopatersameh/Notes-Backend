@@ -1,3 +1,5 @@
+import 'package:notes/Enum/methods_enum.dart';
+
 class CustomMessages {
   static const String _methodsAllowed = 'Allowed methods: ';
 
@@ -30,6 +32,17 @@ class CustomMessages {
   static const String oldPasswordIncorrect = 'Old password is incorrect';
   static const String passwordChangedSuccessfully =
       'Password changed successfully';
+  static const String usersRetrievedSuccessfully =
+      'Users retrieved successfully';
+  static const String failedToRetrieveUsers = 'Failed to retrieve users';
+  static const String userIdRequired = 'User id is required';
+  static const String passwordRetrievedSuccessfully =
+      'Password retrieved successfully';
+  static const String failedToRetrievePassword = 'Failed to retrieve password';
+  static const String roleRequired = 'Role is required';
+  static const String roleInvalid = 'Invalid role';
+  static const String roleUpdatedSuccessfully = 'Role updated successfully';
+  static const String failedToUpdateRole = 'Failed to update role';
 
   // Notes Messages
   static const String notesRetrievedSuccessfully =
@@ -47,19 +60,5 @@ class CustomMessages {
 
   static String methodsAllowed({required List<MethodsEnum> methods}) {
     return '$_methodsAllowed${MethodsEnum.joinValues(methods)}';
-  }
-}
-
-enum MethodsEnum {
-  put('Put'),
-  get('Get'),
-  post('Post'),
-  delete('Delete');
-
-  final String valueString;
-  const MethodsEnum(this.valueString);
-
-  static String joinValues(List<MethodsEnum> methods) {
-    return methods.map((e) => e.valueString).join('/');
   }
 }

@@ -3,6 +3,7 @@
 import 'dart:io';
 import 'package:dart_frog/dart_frog.dart';
 import 'package:notes/Enum/keys_enum.dart';
+import 'package:notes/Enum/methods_enum.dart';
 import 'package:notes/Model/update_user_model.dart';
 import 'package:notes/Model/user_model.dart';
 import 'package:notes/repositories/user_repository.dart';
@@ -36,11 +37,11 @@ Future<Response> getUser(String userId, RequestContext context) async {
     );
   }
 
-  final model = UserModel.fromMap(result);
+  final model = UserModel.fromUser(result);
 
   return MyResponseModel.success(
     message: CustomMessages.userRetrievedSuccessfully,
-    body: model.toMap(),
+    body: model.toUser(),
   );
 }
 

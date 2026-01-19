@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:dart_frog/dart_frog.dart';
 import 'package:notes/Enum/keys_enum.dart';
+import 'package:notes/Enum/methods_enum.dart';
 import 'package:notes/Model/register.dart';
 import 'package:notes/repositories/user_repository.dart';
 import 'package:notes/utils/custom_messages.dart';

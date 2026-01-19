@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:dart_frog/dart_frog.dart';
 import 'package:notes/Enum/methods_enum.dart';
 import 'package:notes/repositories/user_repository.dart';
@@ -7,29 +8,31 @@ import 'package:notes/utils/my_response_model.dart';
 import 'package:notes/utils/tokens.dart';
 
 Future<Response> onRequest(RequestContext context) async {
-  final authData = context.read<AuthData>();
-
+  final auth = context.read<AuthData>();
   return switch (context.request.method) {
-    HttpMethod.post => await logout(authData.token, context),
+    HttpMethod.get => await getUsers(context,auth.userId),
     _ => await MyResponseModel.error(
         statusCode: HttpStatus.methodNotAllowed,
-        message: CustomMessages.methodsAllowed(methods: [MethodsEnum.post]),
+        message: CustomMessages.methodsAllowed(
+          methods: [MethodsEnum.get],
+        ),
       )
   };
 }
 
-Future<Response> logout(String token, RequestContext context) async {
+Future<Response> getUsers(RequestContext context,String id) async {
   final repo = context.read<UserRepository>();
-  final success = await repo.logout(token);
+  final users = await repo.getAllUsers(id);
 
-  if (!success) {
+  if (users == null) {
     return MyResponseModel.error(
       statusCode: HttpStatus.internalServerError,
-      message: CustomMessages.failedToLogout,
+      message: CustomMessages.failedToRetrieveUsers,
     );
   }
 
   return MyResponseModel.success(
-    message: CustomMessages.loggedOutSuccessfully,
+    message: CustomMessages.usersRetrievedSuccessfully,
+    body: users,
   );
 }

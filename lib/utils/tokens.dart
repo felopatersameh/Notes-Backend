@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:dart_frog/dart_frog.dart';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
+import 'package:notes/Enum/role_enum.dart';
 import 'package:notes/utils/env_helper.dart';
 import 'package:uuid/uuid.dart';
 
@@ -36,7 +37,7 @@ class TokensClass {
     final jwt = JWT(
       {
         'sub': userId,
-        'role': role ?? 'user',
+        'role': role ?? RoleEnum.user.valueKey,
         'jti': tokenId,
       },
     );

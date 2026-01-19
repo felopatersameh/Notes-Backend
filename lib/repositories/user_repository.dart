@@ -4,6 +4,7 @@ import 'package:notes/Enum/keys_enum.dart';
 import 'package:notes/Model/login_model.dart';
 import 'package:notes/Model/register.dart';
 import 'package:notes/Model/update_user_model.dart';
+import 'package:notes/Model/user_model.dart';
 import 'package:notes/utils/encryption_helper.dart';
 import 'package:notes/utils/tokens.dart';
 
@@ -21,6 +22,7 @@ class UserRepository {
         where.eq(KeysEnum.email.valueKey, email).fields([
           KeysEnum.password.valueKey,
           KeysEnum.id.valueKey,
+          KeysEnum.role.valueKey,
         ]),
       );
     } catch (e) {
@@ -35,7 +37,10 @@ class UserRepository {
     if (!_isPasswordValid(user, model.password)) return null;
 
     final userId = _extractUserId(user);
-    final newToken = TokensClass.generateToken(userId);
+    final newToken = TokensClass.generateToken(
+      userId,
+      role: user[KeysEnum.role.valueKey].toString(),
+    );
 
     return {
       KeysEnum.token.valueKey: newToken,
@@ -91,6 +96,47 @@ class UserRepository {
     }
   }
 
+  Future<List<Map<String, dynamic>?>?> getAllUsers(
+    String id, {
+    bool includePassword = false,
+  }) async {
+    try {
+      final objectID = _convertToObjectId(id);
+      final results = await _collection
+          .find(
+            where.ne(KeysEnum.id.valueKey, objectID),
+          )
+          .toList();
+
+      return results.map((user) {
+        // if (!includePassword) {
+        //   user.remove(KeysEnum.password.valueKey);
+        // }
+        user[KeysEnum.id.valueKey] = _extractUserId(user);
+        final model = UserModel.fromMap(user);
+        return model.toMap();
+      }).toList();
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> getUserHashedPassword(String id) async {
+    try {
+      final objectId = _convertToObjectId(id);
+      final result = await _collection.findOne(
+        where.eq(KeysEnum.id.valueKey, objectId).fields([
+          KeysEnum.id.valueKey,
+          KeysEnum.password.valueKey,
+        ]),
+      );
+
+      return result;
+    } catch (e) {
+      return null;
+    }
+  }
+
   Future<Map<String, dynamic>?> updateAccount(
     String id,
     UpdateUserModel model,
@@ -141,6 +187,19 @@ class UserRepository {
     }
   }
 
+  Future<bool> updateRole(String id, String role) async {
+    try {
+      final objectId = _convertToObjectId(id);
+      final result = await _collection.updateOne(
+        where.eq(KeysEnum.id.valueKey, objectId),
+        modify.set(KeysEnum.role.valueKey, role),
+      );
+      return result.isSuccess;
+    } catch (e) {
+      return false;
+    }
+  }
+
   Future<bool> deleteAccount(String id) async {
     try {
       final objectId = _convertToObjectId(id);
@@ -179,20 +238,18 @@ class UserRepository {
     return ObjectId.fromHexString(id);
   }
 
-  Map<String, dynamic>? _normalizeUserData(Map<String, dynamic>? data) {
-    if (data == null) return null;
-
-    data[KeysEnum.id.valueKey] = (data[KeysEnum.id.valueKey] as ObjectId).oid;
-    return data;
-  }
-
 //  bool _isUpdateSuccessful(Map<String, dynamic> result) {
 //     return (result.containsKey('nModified') &&
 //             ((result['nModified'] as int?) ?? 0) > 0) ||
 //         (result.containsKey('nMatched') &&
 //             ((result['nMatched'] as int?) ?? 0) > 0);
 //   }
+ Map<String, dynamic>? _normalizeUserData(Map<String, dynamic>? data) {
+    if (data == null) return null;
 
+    data[KeysEnum.id.valueKey] = (data[KeysEnum.id.valueKey] as ObjectId).oid;
+    return data;
+  }
   Future<String?> _getCurrentPassword(ObjectId objectId) async {
     final response = await _collection.findOne(
       where.eq(KeysEnum.id.valueKey, objectId).fields([
@@ -205,7 +262,7 @@ class UserRepository {
 
   bool _verifyOldPassword(String encryptedPassword, String oldPassword) {
     final verifyPassword =
-        EncryptionHelper.verifyPassword(oldPassword,encryptedPassword);
+        EncryptionHelper.verifyPassword(oldPassword, encryptedPassword);
     return verifyPassword;
   }
 

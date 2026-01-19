@@ -1,11 +1,10 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
-
 enum KeysEnum {
   /// Public Keys
   data(valueKey: 'data'),
   message(valueKey: 'message'),
   token(valueKey: 'token'),
   id(valueKey: '_id'),
+  role(valueKey: 'role'),
 
   /// User && notes Keys
   email(valueKey: 'email'),
